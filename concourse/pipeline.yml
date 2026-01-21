@@ -1,0 +1,62 @@
+esources:
+- name: gitops-repo
+  type: git
+  source:
+    uri: https://github.com/ChethanS85/GITOPS-TERRAFORM-CONCOURSE.git
+    branch: main
+
+- name: github-status
+  type: github-status
+  source:
+    repository: ChethanS85/GITOPS-TERRAFORM-CONCOURSE
+    access_token: ((github_token))
+ 
+jobs:
+- name: terraform-apply
+  plan:
+ 
+  # Step 1: Get merged code from main branch
+  - get: gitops-repo
+    trigger: true
+ 
+  # Step 2: Update GitHub status to pending
+  - put: github-status
+    params:
+      state: pending
+      context: terraform/apply
+      description: "Terraform apply started"
+ 
+  # Step 3: Run terraform apply
+  - task: terraform-apply
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: hashicorp/terraform
+      inputs:
+      - name: gitops-repo
+      run:
+        path: sh
+        args:
+        - -exc
+        - |
+          cd gitops-repo/terraform
+          terraform init
+          terraform apply -auto-approve
+ 
+    # Step 4a: Success → Update GitHub status
+    on_success:
+      put: github-status
+      params:
+        state: success
+        context: terraform/apply
+        description: "Terraform apply successful"
+ 
+    # Step 4b: Failure → Update GitHub status
+    on_failure:
+      put: github-status
+      params:
+        state: failure
+        context: terraform/apply
+        description: "Terraform apply failed"
