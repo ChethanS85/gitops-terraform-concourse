@@ -11,6 +11,6 @@ provider "local"{
 
 resource "local_file" "example"{
 
-    filename="${path.module}/hello7.txt
+    filename="${path.module}/hello1.txt
     content="Hello from Gitops"
 }
