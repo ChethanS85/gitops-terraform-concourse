@@ -10,12 +10,20 @@ jobs:
     runs-on: ubuntu-latest
  
     steps:
-      - name: Get PR author email
-        id: email
+      - name: Extract email from PR description
+        id: extract_email
         run: |
-          echo "EMAIL=${{ github.event.pull_request.user.login }}@users.noreply.github.com" >> $GITHUB_OUTPUT
+          PR_BODY="${{ github.event.pull_request.body }}"
+          EMAIL=$(echo "$PR_BODY" | grep -i "Contact Email" -A 1 | tail -n 1 | tr -d '[:space:]')
+          echo "EMAIL=$EMAIL" >> $GITHUB_OUTPUT
  
-      - name: Send email
+      - name: Fail if email not provided
+        if: steps.extract_email.outputs.EMAIL == ''
+        run: |
+          echo "❌ No email found in PR description"
+          exit 1
+ 
+      - name: Send email notification
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -24,17 +32,18 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
  
-          subject: "Your Terraform PR was merged"
-          to: ${{ steps.email.outputs.EMAIL }}
+          subject: "Terraform PR Merged Successfully"
+          to: ${{ steps.extract_email.outputs.EMAIL }}
           from: GitHub Notification <${{ secrets.EMAIL_USERNAME }}>
  
           body: |
             Hello,
  
-            Your pull request has been merged successfully.
+            Your Terraform pull request has been merged successfully.
  
             Repository: ${{ github.repository }}
             PR Number: #${{ github.event.pull_request.number }}
+            PR Title: ${{ github.event.pull_request.title }}
             Commit ID: ${{ github.event.pull_request.merge_commit_sha }}
  
             Status: MERGED
