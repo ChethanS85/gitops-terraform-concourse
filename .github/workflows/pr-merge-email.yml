@@ -5,12 +5,17 @@ on:
     types: [closed]
  
 jobs:
-  send-email:
+  notify:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
  
     steps:
-      - name: Send email notification
+      - name: Get PR author email
+        id: email
+        run: |
+          echo "EMAIL=${{ github.event.pull_request.user.login }}@users.noreply.github.com" >> $GITHUB_OUTPUT
+ 
+      - name: Send email
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -19,18 +24,17 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
  
-          subject: "Terraform PR Merged Successfully"
-          to: shekarappa.s64@gmail.com
+          subject: "Your Terraform PR was merged"
+          to: ${{ steps.email.outputs.EMAIL }}
           from: GitHub Notification <${{ secrets.EMAIL_USERNAME }}>
  
           body: |
             Hello,
  
-            A Terraform pull request has been merged.
+            Your pull request has been merged successfully.
  
             Repository: ${{ github.repository }}
             PR Number: #${{ github.event.pull_request.number }}
-            PR Title: ${{ github.event.pull_request.title }}
             Commit ID: ${{ github.event.pull_request.merge_commit_sha }}
  
             Status: MERGED
