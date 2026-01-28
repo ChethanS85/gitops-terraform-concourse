@@ -20,7 +20,7 @@ jobs:
           password: ${{ secrets.EMAIL_PASSWORD }}
  
           subject: "Terraform PR Merged Successfully"
-          to: thirdparty@example.com
+          to: shekarappa.s64@gmail.com
           from: GitHub Notification <${{ secrets.EMAIL_USERNAME }}>
  
           body: |
