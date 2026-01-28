@@ -1,0 +1,39 @@
+name: PR Merge Email Notification
+ 
+on:
+  pull_request:
+    types: [closed]
+ 
+jobs:
+  send-email:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Send email notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          secure: false
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+ 
+          subject: "Terraform PR Merged Successfully"
+          to: thirdparty@example.com
+          from: GitHub Notification <${{ secrets.EMAIL_USERNAME }}>
+ 
+          body: |
+            Hello,
+ 
+            A Terraform pull request has been merged.
+ 
+            Repository: ${{ github.repository }}
+            PR Number: #${{ github.event.pull_request.number }}
+            PR Title: ${{ github.event.pull_request.title }}
+            Commit ID: ${{ github.event.pull_request.merge_commit_sha }}
+ 
+            Status: MERGED
+ 
+            Regards,
+            Platform Team
